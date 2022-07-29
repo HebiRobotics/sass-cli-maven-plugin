@@ -3,11 +3,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>us.hebi.sass</groupId>
-    <artifactId>sass-exec-maven-plugin</artifactId>
+    <artifactId>sass-cli-maven-plugin</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
 
-    <name>sass-exec-maven-plugin Maven Mojo</name>
+    <name>sass-cli-maven-plugin Maven Mojo</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
