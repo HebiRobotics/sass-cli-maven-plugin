@@ -36,7 +36,7 @@ public class WatchMojo extends RunMojo {
     @Override
     public void execute() throws MojoExecutionException {
         getLog().info("Enabling watch mode");
-        args.add("--watch");
+        watch = true;
         super.execute();
     }
 

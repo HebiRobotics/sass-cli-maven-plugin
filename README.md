@@ -12,7 +12,7 @@ It works by downloading an appropriate native executable and calling it with the
         <plugin>
             <groupId>us.hebi.sass</groupId>
             <artifactId>sass-cli-maven-plugin</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>1.0.1</version>
             <configuration>
                 <args> <!-- Any argument that should be forwarded to the sass cli -->
                     <arg>${project.basedir}/src/scss/input.scss:${project.basedir}/target/classes/output.css</arg>
@@ -35,10 +35,14 @@ It works by downloading an appropriate native executable and calling it with the
 
 # Enabling Watch Mode
 
-The `sass` CLI tool includes a `--watch` mode that continuously triggers a re-compilation whenever a used file changes. You can add the argument manually, or automatically using the `sass:watch` goal.
+The `sass` CLI tool includes a `--watch` mode that continuously triggers a re-compilation whenever a used file changes. You can add the argument by running the `sass:watch` goal, or by specifying the `sass.watch` property.
 
 ```shell
+# goal
 mvn sass-cli:watch
+
+# property
+mvn package -Dsass.watch
 ```
 
 # Custom Versions

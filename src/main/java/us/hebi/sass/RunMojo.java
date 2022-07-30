@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,22 +26,15 @@ import org.apache.maven.plugins.annotations.Execute;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
-import org.codehaus.plexus.archiver.AbstractUnArchiver;
-import org.codehaus.plexus.archiver.tar.TarGZipUnArchiver;
-import org.codehaus.plexus.archiver.tar.TarUnArchiver.UntarCompressionMethod;
-import org.codehaus.plexus.archiver.zip.ZipUnArchiver;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * A mojo that downloads an appropriate binary release for sass and calls the executable
@@ -54,7 +47,7 @@ public class RunMojo extends AbstractMojo {
      * Template for the download URL. Settable in case the
      * download location changes or to support mirrors
      */
-    @Parameter(defaultValue = "https://github.com/sass/dart-sass/releases/download/${sassVersion}/dart-sass-${sassVersion}-${os}-${arch}.${extension}")
+    @Parameter(defaultValue = "https://github.com/sass/dart-sass/releases/download/{sassVersion}/dart-sass-{sassVersion}-{os}-{arch}.{archiveExtension}")
     String downloadUrlTemplate;
 
     /**
@@ -78,6 +71,12 @@ public class RunMojo extends AbstractMojo {
     String sassVersion;
 
     /**
+     * Adds the "--watch" argument to enable continuous watch mode
+     */
+    @Parameter(property = "sass.watch")
+    Boolean watch;
+
+    /**
      * Arguments that are passed to the commandline tool.
      * Watch can be added using the watch mojo.
      */
@@ -85,44 +84,22 @@ public class RunMojo extends AbstractMojo {
     List<String> args;
 
     public void execute() throws MojoExecutionException {
-        if (downloadDirectory == null) {
-            downloadDirectory = Paths.get(System.getProperty("user.home"), ".hebi", "sass");
-        }
-        downloadDirectory = downloadDirectory.toAbsolutePath();
+        Path homeDir = downloadDirectory != null ? downloadDirectory.toAbsolutePath() :
+                Paths.get(System.getProperty("user.home"), ".hebi", "sass");
+        Path extractDir = homeDir.resolve(replaceTemplate("dart-sass-{sassVersion}-{os}-{arch}"));
+        Path executable = extractDir.resolve(nestedDirectory).resolve(PlatformUtil.toScriptName("sass"));
 
-        Path homeDir = downloadDirectory.resolve(replaceVars("dart-sass-${sassVersion}-${os}-${arch}"));
-        Path tmpArchive = homeDir.resolve(replaceVars("archive.${extension}"));
-        Path executable = homeDir.resolve(nestedDirectory).resolve(getExecutableName());
-
+        // Download required files
         if (!Files.exists(executable)) {
-
-            // Download archive
-            String downloadUrl = replaceVars(downloadUrlTemplate);
-            getLog().info("Downloading sass from " + downloadUrl);
-            try (InputStream downloadFile = new URL(downloadUrl).openStream()) {
-                Files.createDirectories(homeDir);
-                Files.copy(downloadFile, tmpArchive, StandardCopyOption.REPLACE_EXISTING);
+            try {
+                String url = replaceTemplate(downloadUrlTemplate);
+                getLog().info("Downloading sass archive from " + url);
+                PlatformUtil.downloadAndExtractArchive(new URL(url), extractDir);
             } catch (MalformedURLException e) {
                 throw new MojoExecutionException("Invalid url", e);
             } catch (IOException e) {
                 throw new MojoExecutionException("Failed to download dart sass archive", e);
             }
-
-            // Extract
-            getLog().info("Extracting sass");
-            AbstractUnArchiver unArchiver = getUnarchiver();
-            unArchiver.setSourceFile(tmpArchive.toFile());
-            unArchiver.setOverwrite(true);
-            unArchiver.setDestDirectory(homeDir.toFile());
-            unArchiver.extract();
-
-            // Cleanup
-            try {
-                Files.delete(tmpArchive);
-            } catch (IOException e) {
-                throw new MojoExecutionException("Failed to delete temporary archive", e);
-            }
-
         }
 
         // Sanity check
@@ -130,14 +107,17 @@ public class RunMojo extends AbstractMojo {
             throw new MojoExecutionException("Target file is not executable: " + executable);
         }
 
-        getLog().info("Executing sass");
         getLog().debug("sass path: " + executable);
-        List<String> processArgs = new ArrayList<>();
-        processArgs.add(String.valueOf(executable));
-        processArgs.addAll(args);
+        List<String> commandArgs = new ArrayList<>();
+        commandArgs.add(String.valueOf(executable));
+        commandArgs.addAll(args);
+        if (watch != null && watch) {
+            commandArgs.add("--watch");
+        }
 
         try {
-            int returnCode = new ProcessBuilder(processArgs)
+            getLog().info("Executing sass");
+            int returnCode = new ProcessBuilder(commandArgs)
                     .inheritIO()
                     .start()
                     .waitFor();
@@ -150,67 +130,35 @@ public class RunMojo extends AbstractMojo {
 
     }
 
-    private String replaceVars(String input) {
-        return input.replaceAll("\\$\\{sassVersion\\}", sassVersion)
-                .replaceAll("\\$\\{os\\}", getOs())
-                .replaceAll("\\$\\{arch\\}", getArch())
-                .replaceAll("\\$\\{extension\\}", getExtension());
+    String replaceTemplate(String input) {
+        return input.replaceAll("\\{sassVersion}", sassVersion)
+                .replaceAll("\\{os}", getOsString())
+                .replaceAll("\\{arch}", getArchString())
+                .replaceAll("\\{archiveExtension}", PlatformUtil.getDefaultArchiveExtension());
     }
 
-    private AbstractUnArchiver getUnarchiver() throws MojoExecutionException {
-        switch (getExtension()) {
-            case "zip":
-                return new ZipUnArchiver();
-            case "tar.gz":
-                TarGZipUnArchiver untar = new TarGZipUnArchiver();
-                untar.setCompression(UntarCompressionMethod.GZIP);
-                return untar;
-            default:
-                throw new MojoExecutionException("Unsupported extension: " + getExtension());
+    String getOsString() {
+        switch (PlatformUtil.getOsFamily()) {
+            case Windows:
+                return "windows";
+            case Linux:
+                return "linux";
+            case macOS:
+                return "macos";
         }
+        throw new AssertionError("Unsupported OS: " + PlatformUtil.OS_NAME);
     }
 
-
-    private String getOs() {
-        if (isWindows()) return "windows";
-        if (OS_NAME.startsWith("linux")) return "linux";
-        if (OS_NAME.contains("mac")) return "macos";
-        throw new AssertionError("Unsupported OS: " + System.getProperty("os.name"));
-    }
-
-    private String getArch() {
-        // https://stackoverflow.com/a/36926327/3574093
-        switch (OS_ARCH) {
-            case "aarch64":
-                return "arm64";
-            case "amd64":
-            case "ia64":
-            case "x86_64":
-                return "x64";
-            case "x86":
-            case "i386":
-            case "i486":
-            case "i586":
-            case "i686":
+    String getArchString() {
+        switch (PlatformUtil.getArch()) {
+            case x86_32:
                 return "ia32";
-            default:
-                throw new AssertionError("Unsupported arch: " + System.getProperty("os.arch"));
+            case x86_64:
+                return "x64";
+            case arm_64:
+                return "arm64";
         }
+        throw new AssertionError("Unsupported arch: " + PlatformUtil.OS_ARCH);
     }
-
-    private String getExtension() {
-        return isWindows() ? "zip" : "tar.gz";
-    }
-
-    private String getExecutableName() {
-        return isWindows() ? "sass.bat" : "sass";
-    }
-
-    private static boolean isWindows() {
-        return OS_NAME.startsWith("win");
-    }
-
-    private static final String OS_NAME = System.getProperty("os.name").toLowerCase(Locale.US);
-    private static final String OS_ARCH = System.getProperty("os.arch").toLowerCase(Locale.US);
 
 }

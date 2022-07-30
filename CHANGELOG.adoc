@@ -1,0 +1,7 @@
+= sass-cli-maven-plugin
+
+== 1.0.1
+* added watch property
+
+== 1.0
+* initial release
