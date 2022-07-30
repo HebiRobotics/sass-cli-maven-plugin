@@ -8,12 +8,76 @@
     <packaging>maven-plugin</packaging>
 
     <name>sass-cli-maven-plugin Maven Mojo</name>
+    <url>https://github.com/HebiRobotics/sass-cli-maven-plugin</url>
+    <description>
+        Maven plugin for the sass cli
+    </description>
+
+    <organization>
+        <name>HEBI Robotics</name>
+        <url>http://www.hebirobotics.com</url>
+    </organization>
+    <inceptionYear>2022</inceptionYear>
+
+    <!-- license information: -->
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <!-- source control information: -->
+    <scm>
+        <url>https://github.com/HebiRobotics/sass-cli-maven-plugin</url>
+        <connection>scm:git:git://github.com/HebiRobotics/sass-cli-maven-plugin.git</connection>
+        <developerConnection>scm:git:git@github.com:HebiRobotics/sass-cli-maven-plugin.git</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
+
+    <!-- Maven Central Distribution -->
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/
+            </url>
+        </repository>
+    </distributionManagement>
+
+    <!-- developer information: -->
+    <developers>
+        <developer>
+            <id>ennerf</id>
+            <name>Florian Enner</name>
+            <email>florian@hebirobotics.com</email>
+            <url>https://github.com/ennerf</url>
+            <organization>HEBI Robotics</organization>
+            <organizationUrl>https://github.com/HebiRobotics</organizationUrl>
+        </developer>
+    </developers>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <maven.plugin.version>3.6.0</maven.plugin.version>
+
+        <!-- gpg info set via settings.xml to sign release artifacts-->
+        <gpg.keyname />
+
+        <!-- License Headers (http://www.mojohaus.org/license-maven-plugin/update-file-header-mojo.html) -->
+        <license.licenseName>apache_v2</license.licenseName>
+        <license.addJavaLicenseAfterPackage>false</license.addJavaLicenseAfterPackage>
+        <license.trimHeaderLine>true</license.trimHeaderLine>
+
+        <!-- For now, disable 'missing' warnings about undocumented @param and @throws -->
+        <doclint>html,syntax,accessibility,reference</doclint>
+
     </properties>
 
     <dependencies>
@@ -33,21 +97,135 @@
             <artifactId>plexus-archiver</artifactId>
             <version>4.4.0</version>
         </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.9.0</version>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <build>
         <plugins>
+
+            <!-- Plugins required for publishing to Maven Central -->
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>license-maven-plugin</artifactId>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-gpg-plugin</artifactId>
+                </plugin>
+                <plugin>
+                    <groupId>org.sonatype.plugins</groupId>
+                    <artifactId>nexus-staging-maven-plugin</artifactId>
+                </plugin>
+
+            <!-- Compatibility update -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-plugin-plugin</artifactId>
                 <version>${maven.plugin.version}</version>
             </plugin>
+
+            <!-- Add licenses to files -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <version>1.16</version>
+                <executions>
+                    <execution>
+                        <id>first</id>
+                        <goals>
+                            <goal>update-file-header</goal>
+                        </goals>
+                        <phase>process-sources</phase>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- ensure the manifest contains artifact version information: -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>2.4</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+
+            <!-- Required: Source Jar -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.0.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Required: Javadoc Jar -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.0.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadoc</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Required: Sign Artifacts -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>1.6</version>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                        <configuration>
+                            <keyname>${gpg.keyname}</keyname>
+                            <passphraseServerId>${gpg.keyname}</passphraseServerId>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Deploy selected modules -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>3.0.0-M1</version>
+            </plugin>
+
+            <!-- Nexus Staging -->
+            <plugin>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <version>1.6.8</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <serverId>ossrh</serverId>
+                    <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
+                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                </configuration>
+            </plugin>
+
         </plugins>
     </build>
 
