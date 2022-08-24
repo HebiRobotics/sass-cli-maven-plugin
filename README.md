@@ -1,8 +1,6 @@
 # sass-cli-maven-plugin
 
-This Maven plugin is a thin wrapper around the [Sass](https://sass-lang.com/) commandline interface for generating CSS files.
-
-It works by downloading an appropriate native executable and calling it with the specified arguments. Please refer to [Sass CLI](https://sass-lang.com/documentation/cli/dart-sass) for documentation.
+This Maven plugin is a thin wrapper around the [Sass](https://sass-lang.com/) commandline interface for generating CSS files. It downloads an appropriate native executable and executes it with the specified arguments. Please refer to [Sass CLI](https://sass-lang.com/documentation/cli/dart-sass) for documentation.
 
 ## Maven Example
 
@@ -14,6 +12,7 @@ It works by downloading an appropriate native executable and calling it with the
             <artifactId>sass-cli-maven-plugin</artifactId>
             <version>1.0.1</version>
             <configuration>
+                <sassVersion>1.54.5</sassVersion>
                 <args> <!-- Any argument that should be forwarded to the sass cli -->
                     <arg>${project.basedir}/src/scss/input.scss:${project.basedir}/target/classes/output.css</arg>
                     <arg>${project.basedir}/src/scss/input2.scss:${project.basedir}/target/classes/output2.css</arg>
@@ -46,12 +45,25 @@ mvn sass-cli:watch
 mvn package -Dsass.watch
 ```
 
-## Custom Versions
+## Sass Version
 
-Given that `sass` will likely update more often than this plugin, you can specify the version using the `sass.version` property. You can find available versions on the [Github Releases](https://github.com/sass/dart-sass/releases/) page.
+Sass updates more often than this plugin, so it is recommended to manually specify the latest version. You can do this via the `sassVersion` argument or the `sass.version` property. Available versions can be found on [Github Releases](https://github.com/sass/dart-sass/releases/).
 
 ```xml
 <properties>
-    <sass.version>THE DESIRED RELEASE</sass.version>
+    <sass.version>1.54.5</sass.version>
 </properties>
 ```
+
+<table>
+  <tr>
+    <td valign="middle">
+      The latest release is
+    </td>
+    <td valign="middle">
+      <a href="https://pub.dartlang.org/packages/sass"><img alt="Pub version" src="https://img.shields.io/pub/v/sass.svg"></a>
+    </td>
+  </tr>
+</table>
+
+
