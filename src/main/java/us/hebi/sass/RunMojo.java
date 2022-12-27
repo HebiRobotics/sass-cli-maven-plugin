@@ -67,8 +67,14 @@ public class RunMojo extends AbstractMojo {
     /**
      * Dart-SCSS version. See https://github.com/sass/dart-sass/releases/
      */
-    @Parameter(defaultValue = "1.53.0", property = "sass.version")
+    @Parameter(defaultValue = "1.57.1", property = "sass.version")
     String sassVersion;
+
+    /**
+     * Skips execution of this plugin
+     */
+    @Parameter(property = "sass.skip", defaultValue = "false")
+    Boolean skip;
 
     /**
      * Adds the "--watch" argument to enable continuous watch mode
@@ -84,6 +90,11 @@ public class RunMojo extends AbstractMojo {
     List<String> args;
 
     public void execute() throws MojoExecutionException {
+        if (skip != null && skip) {
+            getLog().info("Skipping sass execution");
+            return;
+        }
+
         Path homeDir = downloadDirectory != null ? downloadDirectory.toAbsolutePath() :
                 Paths.get(System.getProperty("user.home"), ".hebi", "sass");
         Path extractDir = homeDir.resolve(replaceTemplate("dart-sass-{sassVersion}-{os}-{arch}"));
