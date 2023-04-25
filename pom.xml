@@ -4,7 +4,7 @@
 
     <groupId>us.hebi.sass</groupId>
     <artifactId>sass-cli-maven-plugin</artifactId>
-    <version>1.0.3</version>
+    <version>1.1-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
 
     <name>sass-cli-maven-plugin Maven Mojo</name>
