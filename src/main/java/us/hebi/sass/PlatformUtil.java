@@ -39,117 +39,111 @@ import java.util.Locale;
  */
 public class PlatformUtil {
 
-  public static String getDefaultArchiveExtension() {
-    return isWindows() ? "zip" : "tar.gz";
-  }
-
-  public static String toScriptName(String name) {
-    return isWindows() ? name + ".bat" : name;
-  }
-
-  public static void downloadAndExtractArchive(URL url, Path destinationDirectory) throws IOException {
-    // Download
-    Path tmpDownloadFile;
-    try (InputStream downloadFile = url.openStream()) {
-      Files.createDirectories(destinationDirectory);
-      tmpDownloadFile = Files.createTempFile(destinationDirectory, null, createTemporaryArchiveSuffix(url.toExternalForm()));
-      FileUtils.copyInputStreamToFile(downloadFile, tmpDownloadFile.toFile());
+    public static String getDefaultArchiveExtension() {
+        return isWindows() ? "zip" : "tar.gz";
     }
 
-    // Extract
-    extractArchive(tmpDownloadFile, destinationDirectory);
-
-    // Cleanup
-    Files.delete(tmpDownloadFile);
-  }
-
-  private static String createTemporaryArchiveSuffix(String url) {
-    if (url.endsWith(".zip")) {
-      return ".zip";
-    } else if (url.endsWith(".tar.gz")) {
-      return ".tar.gz";
-    } else {
-      throw new UnsupportedOperationException("Unsupported archive extension on: " + url);
-    }
-  }
-
-  public static void extractArchive(Path sourceArchive, Path destinationDirectory) {
-    // Create appropriate unarchiver
-    final AbstractUnArchiver unArchiver;
-    String path = sourceArchive.toString().toLowerCase(Locale.ENGLISH);
-    if (path.endsWith(".zip")) {
-      unArchiver = new ZipUnArchiver();
-    } else if (path.endsWith(".tar.gz")) {
-      TarGZipUnArchiver untar = new TarGZipUnArchiver();
-      untar.setCompression(UntarCompressionMethod.GZIP);
-      unArchiver = untar;
-    } else {
-      throw new UnsupportedOperationException("Unsupported archive extension on: " + path);
+    public static String toScriptName(String name) {
+        return isWindows() ? name + ".bat" : name;
     }
 
-    // Extract to specified directory
-    unArchiver.setSourceFile(sourceArchive.toFile());
-    unArchiver.setOverwrite(true);
-    unArchiver.setDestDirectory(destinationDirectory.toFile());
-    unArchiver.extract();
-  }
+    public static void downloadAndExtractArchive(URL url, Path destinationDirectory) throws IOException {
+        // Download
+        Path tmpDownloadFile;
+        try (InputStream downloadFile = url.openStream()) {
+            Files.createDirectories(destinationDirectory);
+            tmpDownloadFile = Files.createTempFile(destinationDirectory, null, createTemporaryArchiveSuffix(url.toExternalForm()));
+            FileUtils.copyInputStreamToFile(downloadFile, tmpDownloadFile.toFile());
+        }
 
-  public enum Architecture {
-    x86_32, x86_64, arm_32, arm_64
-  }
+        // Extract
+        extractArchive(tmpDownloadFile, destinationDirectory);
 
-  public static Architecture getArch() {
-    // https://stackoverflow.com/a/36926327/3574093
-    switch (OS_ARCH) {
-      case "aarch64":
-        return Architecture.arm_64;
-      case "arm":
-        return Architecture.arm_32;
-      case "amd64":
-      case "ia64":
-      case "x86_64":
-        return Architecture.x86_64;
-      case "x86":
-      case "i386":
-      case "i486":
-      case "i586":
-      case "i686":
-        return Architecture.x86_32;
-      default:
-        throw new UnsupportedOperationException("Unsupported arch: " + System.getProperty("os.arch"));
+        // Cleanup
+        Files.delete(tmpDownloadFile);
     }
-  }
 
-  public enum OsFamily {
-    Windows, Linux, macOS;
-  }
-
-  public static OsFamily getOsFamily() {
-    if (isWindows()) {
-      return OsFamily.Windows;
+    private static String createTemporaryArchiveSuffix(String url) {
+        if (url.endsWith(".zip")) {
+            return ".zip";
+        } else if (url.endsWith(".tar.gz")) {
+            return ".tar.gz";
+        } else {
+            throw new UnsupportedOperationException("Unsupported archive extension on: " + url);
+        }
     }
-    if (isLinux()) {
-      return OsFamily.Linux;
+
+    public static void extractArchive(Path sourceArchive, Path destinationDirectory) {
+        // Create appropriate unarchiver
+        final AbstractUnArchiver unArchiver;
+        String path = sourceArchive.toString().toLowerCase(Locale.ENGLISH);
+        if (path.endsWith(".zip")) {
+            unArchiver = new ZipUnArchiver();
+        } else if (path.endsWith(".tar.gz")) {
+            TarGZipUnArchiver untar = new TarGZipUnArchiver();
+            untar.setCompression(UntarCompressionMethod.GZIP);
+            unArchiver = untar;
+        } else {
+            throw new UnsupportedOperationException("Unsupported archive extension on: " + path);
+        }
+
+        // Extract to specified directory
+        unArchiver.setSourceFile(sourceArchive.toFile());
+        unArchiver.setOverwrite(true);
+        unArchiver.setDestDirectory(destinationDirectory.toFile());
+        unArchiver.extract();
     }
-    if (isMac()) {
-      return OsFamily.macOS;
+
+    public enum Architecture {
+        x86_32, x86_64, arm_32, arm_64
     }
-    throw new UnsupportedOperationException("Unsupported OS: " + System.getProperty("os.name"));
-  }
 
-  public static boolean isWindows() {
-    return OS_NAME.startsWith("win");
-  }
+    public static Architecture getArch() {
+        // https://stackoverflow.com/a/36926327/3574093
+        switch (OS_ARCH) {
+            case "aarch64":
+                return Architecture.arm_64;
+            case "arm":
+                return Architecture.arm_32;
+            case "amd64":
+            case "ia64":
+            case "x86_64":
+                return Architecture.x86_64;
+            case "x86":
+            case "i386":
+            case "i486":
+            case "i586":
+            case "i686":
+                return Architecture.x86_32;
+            default:
+                throw new UnsupportedOperationException("Unsupported arch: " + System.getProperty("os.arch"));
+        }
+    }
 
-  public static boolean isMac() {
-    return OS_NAME.contains("mac");
-  }
+    public enum OsFamily {
+        Windows, Linux, macOS;
+    }
 
-  public static boolean isLinux() {
-    return OS_NAME.startsWith("linux");
-  }
+    public static OsFamily getOsFamily() {
+        if (isWindows()) return OsFamily.Windows;
+        if (isLinux()) return OsFamily.Linux;
+        if (isMac()) return OsFamily.macOS;
+        throw new UnsupportedOperationException("Unsupported OS: " + System.getProperty("os.name"));
+    }
 
-  public static final String OS_NAME = System.getProperty("os.name").toLowerCase(Locale.US);
-  public static final String OS_ARCH = System.getProperty("os.arch").toLowerCase(Locale.US);
+    public static boolean isWindows() {
+        return OS_NAME.startsWith("win");
+    }
+
+    public static boolean isMac() {
+        return OS_NAME.contains("mac");
+    }
+
+    public static boolean isLinux() {
+        return OS_NAME.startsWith("linux");
+    }
+
+    public static final String OS_NAME = System.getProperty("os.name").toLowerCase(Locale.US);
+    public static final String OS_ARCH = System.getProperty("os.arch").toLowerCase(Locale.US);
 
 }
