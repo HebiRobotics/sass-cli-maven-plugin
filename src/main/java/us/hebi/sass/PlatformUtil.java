@@ -31,7 +31,6 @@ import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.Locale;
 
 /**
@@ -50,29 +49,25 @@ public class PlatformUtil {
 
   public static void downloadAndExtractArchive(URL url, Path destinationDirectory) throws IOException {
     // Download
-    Path tmpArchive = destinationDirectory.resolve(createTemporaryArchiveName(url.toExternalForm()));
+    Path tmpDownloadFile;
     try (InputStream downloadFile = url.openStream()) {
       Files.createDirectories(destinationDirectory);
-      Path tmpDownloadFile = Files.createTempFile(destinationDirectory, null, null);
+      tmpDownloadFile = Files.createTempFile(destinationDirectory, null, createTemporaryArchiveSuffix(url.toExternalForm()));
       FileUtils.copyInputStreamToFile(downloadFile, tmpDownloadFile.toFile());
-      if (tmpArchive.toFile().exists()) {
-        tmpArchive.toFile().delete();
-      }
-      Files.move(tmpDownloadFile, tmpArchive, StandardCopyOption.ATOMIC_MOVE);
     }
 
     // Extract
-    extractArchive(tmpArchive, destinationDirectory);
+    extractArchive(tmpDownloadFile, destinationDirectory);
 
     // Cleanup
-    Files.delete(tmpArchive);
+    Files.delete(tmpDownloadFile);
   }
 
-  private static String createTemporaryArchiveName(String url) {
+  private static String createTemporaryArchiveSuffix(String url) {
     if (url.endsWith(".zip")) {
-      return "archive.zip";
+      return ".zip";
     } else if (url.endsWith(".tar.gz")) {
-      return "archive.tar.gz";
+      return ".tar.gz";
     } else {
       throw new UnsupportedOperationException("Unsupported archive extension on: " + url);
     }
