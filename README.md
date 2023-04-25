@@ -10,9 +10,9 @@ This Maven plugin is a thin wrapper around the [Sass](https://sass-lang.com/) co
         <plugin>
             <groupId>us.hebi.sass</groupId>
             <artifactId>sass-cli-maven-plugin</artifactId>
-            <version>1.0.2</version>
+            <version>1.0.3</version>
             <configuration>
-                <sassVersion>1.57.1</sassVersion>
+                <sassVersion>1.62.0</sassVersion>
                 <args> <!-- Any argument that should be forwarded to the sass cli -->
                     <arg>${project.basedir}/src/scss/input.scss:${project.basedir}/target/classes/output.css</arg>
                     <arg>${project.basedir}/src/scss/input2.scss:${project.basedir}/target/classes/output2.css</arg>
@@ -51,7 +51,7 @@ Sass updates more often than this plugin, so it is recommended to manually speci
 
 ```xml
 <properties>
-    <sass.version>1.57.1</sass.version>
+    <sass.version>1.62.0</sass.version>
 </properties>
 ```
 

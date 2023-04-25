@@ -67,7 +67,7 @@ public class RunMojo extends AbstractMojo {
     /**
      * Dart-SCSS version. See https://github.com/sass/dart-sass/releases/
      */
-    @Parameter(defaultValue = "1.57.1", property = "sass.version")
+    @Parameter(defaultValue = "1.62.0", property = "sass.version")
     String sassVersion;
 
     /**

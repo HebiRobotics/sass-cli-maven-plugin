@@ -48,28 +48,34 @@ public class PlatformUtil {
     }
 
     public static void downloadAndExtractArchive(URL url, Path destinationDirectory) throws IOException {
-        // Download
-        Path tmpArchive = destinationDirectory.resolve(createTemporaryArchiveName(url.toExternalForm()));
-        try (InputStream downloadFile = url.openStream()) {
-            Files.createDirectories(destinationDirectory);
-            Files.copy(downloadFile, tmpArchive, StandardCopyOption.REPLACE_EXISTING);
+        Path tmpArchive = createTemporaryArchive(url.toExternalForm());
+
+        try {
+            // Download
+            try (InputStream downloadFile = url.openStream()) {
+                Files.createDirectories(destinationDirectory);
+                Files.copy(downloadFile, tmpArchive, StandardCopyOption.REPLACE_EXISTING);
+            }
+
+            // Extract
+            extractArchive(tmpArchive, destinationDirectory);
+
+        } finally {
+            // Cleanup
+            Files.delete(tmpArchive);
         }
-
-        // Extract
-        extractArchive(tmpArchive, destinationDirectory);
-
-        // Cleanup
-        Files.delete(tmpArchive);
     }
 
-    private static String createTemporaryArchiveName(String url) {
+    private static Path createTemporaryArchive(String url) throws IOException {
+        final String extension;
         if (url.endsWith(".zip")) {
-            return "archive.zip";
+            extension = ".zip";
         } else if (url.endsWith(".tar.gz")) {
-            return "archive.tar.gz";
+            extension = ".tar.gz";
         } else {
             throw new UnsupportedOperationException("Unsupported archive extension on: " + url);
         }
+        return Files.createTempFile("archive", extension);
     }
 
     public static void extractArchive(Path sourceArchive, Path destinationDirectory) {

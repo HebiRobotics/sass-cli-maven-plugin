@@ -1,5 +1,9 @@
 = sass-cli-maven-plugin
 
+== 1.0.3
+* fixed an issue with existing file locks (#3 thanks @osvso)
+* updated default version to 1.62.0
+
 == 1.0.2
 * added skip property
 * updated default version to 1.57.1
