@@ -20,6 +20,7 @@
 
 package us.hebi.sass;
 
+import org.apache.commons.io.FileUtils;
 import org.codehaus.plexus.archiver.AbstractUnArchiver;
 import org.codehaus.plexus.archiver.tar.TarGZipUnArchiver;
 import org.codehaus.plexus.archiver.tar.TarUnArchiver.UntarCompressionMethod;
@@ -39,6 +40,7 @@ import java.util.Locale;
  */
 public class PlatformUtil {
 
+    public static int BUFFER_SIZE = 1024;
     public static String getDefaultArchiveExtension() {
         return isWindows() ? "zip" : "tar.gz";
     }
@@ -52,7 +54,9 @@ public class PlatformUtil {
         Path tmpArchive = destinationDirectory.resolve(createTemporaryArchiveName(url.toExternalForm()));
         try (InputStream downloadFile = url.openStream()) {
             Files.createDirectories(destinationDirectory);
-            Files.copy(downloadFile, tmpArchive, StandardCopyOption.REPLACE_EXISTING);
+            Path tmpDownloadFile = Files.createTempFile(destinationDirectory, null, null);
+            FileUtils.copyInputStreamToFile(downloadFile, tmpDownloadFile.toFile());
+            Files.move(tmpDownloadFile, tmpArchive, StandardCopyOption.ATOMIC_MOVE);
         }
 
         // Extract
