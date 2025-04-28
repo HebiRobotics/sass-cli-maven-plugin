@@ -26,6 +26,9 @@ import org.apache.maven.plugins.annotations.Execute;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.codehaus.plexus.util.cli.CommandLineException;
+import org.codehaus.plexus.util.cli.CommandLineUtils;
+import org.codehaus.plexus.util.cli.Commandline;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -128,14 +131,15 @@ public class RunMojo extends AbstractMojo {
 
         try {
             getLog().info("Executing sass");
-            int returnCode = new ProcessBuilder(commandArgs)
-                    .inheritIO()
-                    .start()
-                    .waitFor();
+            Commandline commandline = new Commandline();
+            commandline.addArguments(commandArgs.toArray(new String[0]));
+            int returnCode = CommandLineUtils.executeCommandLine(commandline,
+                    System.out::println,
+                    System.err::println);
             if (returnCode != 0) {
                 throw new MojoExecutionException("Dart sass executable returned error code " + returnCode);
             }
-        } catch (IOException | InterruptedException e) {
+        } catch (CommandLineException e) {
             throw new MojoExecutionException("Failed to execute dart sass", e);
         }
 
