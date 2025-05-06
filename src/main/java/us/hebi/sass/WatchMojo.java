@@ -29,7 +29,7 @@ import org.apache.maven.plugins.annotations.Mojo;
  * @author Florian Enner
  * @since 30 Jul 2022
  */
-@Mojo(name = "watch")
+@Mojo(name = "watch", threadSafe = true)
 @Execute(phase = LifecyclePhase.GENERATE_RESOURCES)
 public class WatchMojo extends RunMojo {
 

@@ -42,7 +42,7 @@ import java.util.List;
 /**
  * A mojo that downloads an appropriate binary release for sass and calls the executable
  */
-@Mojo(name = "run")
+@Mojo(name = "run", threadSafe = true)
 @Execute(phase = LifecyclePhase.GENERATE_RESOURCES)
 public class RunMojo extends AbstractMojo {
 
